@@ -9,6 +9,10 @@ spring:
     hibernate:
       ddl-auto: update
     open-in-view: false
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
   rabbitmq:
     host: ${RABBIT_HOST:localhost}
     port: 5672
