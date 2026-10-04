@@ -3,6 +3,7 @@ package com.project.expensetracker.controller;
 import com.project.expensetracker.dto.expense.ExpenseFilter;
 import com.project.expensetracker.dto.expense.ExpenseRequest;
 import com.project.expensetracker.dto.expense.ExpenseResponse;
+import com.project.expensetracker.security.CurrentUserId;
 import com.project.expensetracker.service.ExpenseService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,10 +25,9 @@ public class ExpenseController {
 
     private final ExpenseService expenseService;
 
-    private static final Long FAKE_USER_ID = 1L;
-
     @GetMapping
     public ResponseEntity<Page<ExpenseResponse>> getFiltered(
+            @CurrentUserId Long userId,
             @RequestParam(required = false) LocalDate startDate,
             @RequestParam(required = false) LocalDate endDate,
             @RequestParam(required = false) Long categoryId,
@@ -36,25 +36,30 @@ public class ExpenseController {
             @PageableDefault(size = 20, sort = "date", direction = Sort.Direction.DESC) Pageable pageable) {
 
         ExpenseFilter filter = new ExpenseFilter(startDate, endDate, categoryId, minAmount, maxAmount);
-        return ResponseEntity.ok(expenseService.getFiltered(FAKE_USER_ID, filter, pageable));
+        return ResponseEntity.ok(expenseService.getFiltered(userId, filter, pageable));
     }
 
     @PostMapping
-    public ResponseEntity<ExpenseResponse> create(@Valid @RequestBody ExpenseRequest request) {
-        ExpenseResponse response = expenseService.create(FAKE_USER_ID, request);
+    public ResponseEntity<ExpenseResponse> create(
+            @CurrentUserId Long userId,
+            @Valid @RequestBody ExpenseRequest request) {
+        ExpenseResponse response = expenseService.create(userId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<ExpenseResponse> update(
+            @CurrentUserId Long userId,
             @PathVariable Long id,
             @Valid @RequestBody ExpenseRequest request) {
-        return ResponseEntity.ok(expenseService.update(FAKE_USER_ID, id, request));
+        return ResponseEntity.ok(expenseService.update(userId, id, request));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        expenseService.delete(FAKE_USER_ID, id);
+    public ResponseEntity<Void> delete(
+            @CurrentUserId Long userId,
+            @PathVariable Long id) {
+        expenseService.delete(userId, id);
         return ResponseEntity.noContent().build();
     }
 }
