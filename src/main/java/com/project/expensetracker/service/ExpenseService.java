@@ -3,11 +3,15 @@ package com.project.expensetracker.service;
 import com.project.expensetracker.dto.expense.ExpenseFilter;
 import com.project.expensetracker.dto.expense.ExpenseRequest;
 import com.project.expensetracker.dto.expense.ExpenseResponse;
+import com.project.expensetracker.entity.Budget;
 import com.project.expensetracker.entity.Category;
 import com.project.expensetracker.entity.Expense;
 import com.project.expensetracker.entity.User;
 import com.project.expensetracker.exception.ResourceNotFoundException;
 import com.project.expensetracker.mapper.ExpenseMapper;
+import com.project.expensetracker.messaging.BudgetAlertMessage;
+import com.project.expensetracker.messaging.BudgetAlertProducer;
+import com.project.expensetracker.repository.BudgetRepository;
 import com.project.expensetracker.repository.CategoryRepository;
 import com.project.expensetracker.repository.ExpenseRepository;
 import com.project.expensetracker.repository.UserRepository;
@@ -17,6 +21,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.time.YearMonth;
+import java.util.Optional;
 
 import static com.project.expensetracker.repository.specification.ExpenseSpecifications.*;
 
@@ -28,7 +36,9 @@ public class ExpenseService {
     private final ExpenseRepository expenseRepository;
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
+    private final BudgetRepository budgetRepository;
     private final ExpenseMapper expenseMapper;
+    private final BudgetAlertProducer budgetAlertProducer;
 
     public Page<ExpenseResponse> getFiltered(Long userId, ExpenseFilter filter, Pageable pageable) {
         Specification<Expense> spec = belongsToUser(userId)
@@ -62,7 +72,37 @@ public class ExpenseService {
                 .build();
 
         Expense saved = expenseRepository.save(expense);
+
+        checkBudgetAndAlert(user, category, request.date());
+
         return expenseMapper.toResponse(saved);
+    }
+
+    private void checkBudgetAndAlert(User user, Category category, java.time.LocalDate date) {
+        YearMonth month = YearMonth.from(date);
+
+        Optional<Budget> budgetOpt = budgetRepository.findByCategoryIdAndMonth(category.getId(), month);
+        if (budgetOpt.isEmpty()) {
+            return;
+        }
+
+        Budget budget = budgetOpt.get();
+
+        BigDecimal totalSpent = expenseRepository.sumAmountByCategoryAndPeriod(
+                category.getId(), month.atDay(1), month.atEndOfMonth());
+
+        if (totalSpent.compareTo(budget.getMonthlyLimit()) > 0) {
+            BudgetAlertMessage message = new BudgetAlertMessage(
+                    user.getId(),
+                    user.getEmail(),
+                    category.getId(),
+                    category.getName(),
+                    month,
+                    budget.getMonthlyLimit(),
+                    totalSpent);
+
+            budgetAlertProducer.sendAlert(message);
+        }
     }
 
     public ExpenseResponse update(Long userId, Long expenseId, ExpenseRequest request) {
