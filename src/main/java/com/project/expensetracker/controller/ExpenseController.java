@@ -5,6 +5,8 @@ import com.project.expensetracker.dto.expense.ExpenseRequest;
 import com.project.expensetracker.dto.expense.ExpenseResponse;
 import com.project.expensetracker.security.CurrentUserId;
 import com.project.expensetracker.service.ExpenseService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -21,11 +23,13 @@ import java.time.LocalDate;
 @RestController
 @RequestMapping("/api/expenses")
 @RequiredArgsConstructor
+@Tag(name = "Dépenses", description = "Gestion des dépenses")
 public class ExpenseController {
 
     private final ExpenseService expenseService;
 
     @GetMapping
+    @Operation(summary = "Lister mes dépenses", description = "Renvoie toutes les dépenses de l'utilisateur connecté")
     public ResponseEntity<Page<ExpenseResponse>> getFiltered(
             @CurrentUserId Long userId,
             @RequestParam(required = false) LocalDate startDate,
@@ -40,6 +44,7 @@ public class ExpenseController {
     }
 
     @PostMapping
+    @Operation(summary = "Créer une dépense")
     public ResponseEntity<ExpenseResponse> create(
             @CurrentUserId Long userId,
             @Valid @RequestBody ExpenseRequest request) {
@@ -48,6 +53,7 @@ public class ExpenseController {
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "Modifier une dépense")
     public ResponseEntity<ExpenseResponse> update(
             @CurrentUserId Long userId,
             @PathVariable Long id,
@@ -56,6 +62,7 @@ public class ExpenseController {
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Supprimer une dépense")
     public ResponseEntity<Void> delete(
             @CurrentUserId Long userId,
             @PathVariable Long id) {

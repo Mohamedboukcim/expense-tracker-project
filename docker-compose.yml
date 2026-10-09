@@ -10,6 +10,11 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U expense_user -d expense_tracker"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   rabbitmq:
     image: rabbitmq:3-management-alpine
@@ -17,6 +22,28 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: expense-tracker-app
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/expense_tracker
+      DB_USER: expense_user
+      DB_PASSWORD: expense_pass
+      RABBIT_HOST: rabbitmq
+      JWT_SECRET: ceci-est-une-cle-secrete-de-developpement-a-ne-jamais-utiliser-en-production-changez-moi
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
 
 volumes:
   postgres_data:
