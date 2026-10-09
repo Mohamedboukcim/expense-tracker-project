@@ -42,19 +42,16 @@ API REST de gestion de dépenses personnelles, développée avec Java et Spring 
 
 Architecture en couches, avec séparation stricte des responsabilités :
 
-\`\`\`
-controller/  → endpoints REST uniquement
-service/     → logique métier
-repository/  → accès aux données (Spring Data JPA)
-entity/      → modèle de données (JPA)
-dto/         → objets exposés par l'API
-mapper/      → conversion entité ↔ DTO
-security/    → authentification JWT
-messaging/   → producteur / consommateur RabbitMQ
-exception/   → gestion centralisée des erreurs
-config/      → configuration Spring (sécurité, OpenAPI, RabbitMQ)
-\`\`\`
-
+- `controller/` → endpoints REST uniquement
+- `service/` → logique métier
+- `repository/` → accès aux données (Spring Data JPA)
+- `entity/` → modèle de données (JPA)
+- `dto/` → objets exposés par l'API
+- `mapper/` → conversion entité ↔ DTO
+- `security/` → authentification JWT
+- `messaging/` → producteur / consommateur RabbitMQ
+- `exception/` → gestion centralisée des erreurs
+- `config/` → configuration Spring (sécurité, OpenAPI, RabbitMQ)
 
 ## Lancer le projet
 
