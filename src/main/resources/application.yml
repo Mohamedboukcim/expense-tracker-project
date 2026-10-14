@@ -7,7 +7,7 @@ spring:
     password: ${DB_PASSWORD:expense_pass}
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     open-in-view: false
     show-sql: true
     properties:
