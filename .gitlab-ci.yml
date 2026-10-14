@@ -6,13 +6,10 @@ stages:
 
 variables:
   MAVEN_OPTS: "-Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository"
-  POSTGRES_DB: expense_tracker_test
-  POSTGRES_USER: expense_user
-  POSTGRES_PASSWORD: expense_pass
-  DB_URL: jdbc:postgresql://postgres:5432/expense_tracker_test
-  DB_USER: expense_user
-  DB_PASSWORD: expense_pass
-  RABBIT_HOST: rabbitmq
+  DOCKER_HOST: tcp://docker:2375
+  DOCKER_TLS_CERTDIR: ""
+  DOCKER_DRIVER: overlay2
+  TESTCONTAINERS_HOST_OVERRIDE: docker
 
 cache:
   paths:
@@ -21,19 +18,21 @@ cache:
 test:
   stage: test
   services:
-    - name: postgres:16-alpine
-      alias: postgres
-    - name: rabbitmq:3-management-alpine
-      alias: rabbitmq
+    - name: docker:24.0.9-dind
+      alias: docker
+      command: ["--tls=false"]
   script:
     - mvn test -B
 
 build:
   stage: build
-  image: docker:24-dind
+  image: docker:24.0.9-cli
   services:
-    - docker:24-dind
+    - name: docker:24.0.9-dind
+      alias: docker
+      command: ["--tls=false"]
   script:
+    - docker info
     - docker build -t expense-tracker:$CI_COMMIT_SHORT_SHA .
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
