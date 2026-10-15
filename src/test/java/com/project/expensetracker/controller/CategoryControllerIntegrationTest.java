@@ -12,6 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
+import java.util.UUID;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class CategoryControllerIntegrationTest extends AbstractIntegrationTest {
@@ -22,7 +24,9 @@ class CategoryControllerIntegrationTest extends AbstractIntegrationTest {
     @Test
     void createCategory_shouldReturn201_whenAuthenticatedAndValid() {
         RegisterRequest registerRequest = new RegisterRequest(
-                "integration-test@test.com", "motdepasse123", "Test Integration");
+                "integration-" + UUID.randomUUID() + "@test.com",
+                "motdepasse123",
+                "Test Integration");
 
         ResponseEntity<AuthResponse> authResponse = restTemplate.postForEntity(
                 "/api/auth/register", registerRequest, AuthResponse.class);
